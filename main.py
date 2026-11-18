@@ -29,6 +29,7 @@ from pathlib import Path
 MAX_BYTES = 1_048_576  # 1 MiB
 MAX_DIM = 1024
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+PNG_IEND = b"\x00\x00\x00\x00IEND\xaeB\x60\x82"  # the final chunk of every whole PNG
 
 ROOT = Path(__file__).resolve().parent
 ASSET = ROOT / "assets" / "entry.png.b64"
@@ -47,6 +48,8 @@ def png_dimensions(data: bytes) -> tuple[int, int]:
 def validate(data: bytes) -> None:
     if len(data) > MAX_BYTES:
         raise ValueError(f"poster is {len(data)} bytes; the limit is {MAX_BYTES}")
+    if not data.endswith(PNG_IEND):
+        raise ValueError("poster does not end with the PNG IEND chunk; it is truncated")
     width, height = png_dimensions(data)
     if width > MAX_DIM or height > MAX_DIM:
         raise ValueError(f"poster is {width}x{height}; the limit is {MAX_DIM}x{MAX_DIM}")
